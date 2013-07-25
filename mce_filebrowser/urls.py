@@ -9,6 +9,11 @@ urlpatterns = patterns('',
         {'file_type': 'img'},
         name='mce-filebrowser-images'
     ),
+    url(r'^media/$',
+        views.filebrowser,
+        {'file_type': 'img'},
+        name='mce-filebrowser-images'
+    ),
     url(r'^file/$', 
         views.filebrowser, 
         {'file_type': 'doc'},
@@ -18,6 +23,11 @@ urlpatterns = patterns('',
         views.filebrowser_remove_file, 
         {'file_type': 'img'},
         name='mce-filebrowser-remove-image'
+    ),
+    url(r'^media/remove/(?P<item_id>\d+)/$',
+        views.filebrowser_remove_file,
+        {'file_type': 'img'},
+        name='mce-filebrowser-remove-media'
     ),
     url(r'^file/remove/(?P<item_id>\d+)/$', 
         views.filebrowser_remove_file, 

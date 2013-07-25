@@ -4,31 +4,87 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>{% trans "File browser" %}</title>
+
+  <link rel="stylesheet" href="{% static LOCAL_MCE_FILEBROWSER_THEMECSS %}" type="text/css" media="screen, projection" />
   <link rel="stylesheet" href="{% static 'mce_filebrowser/css/mce_filebrowser.css' %}" type="text/css" media="screen, projection" />
-  <script type="text/javascript" src="{% static 'tiny_mce/tiny_mce_popup.js' %}"></script>
-  <script type="text/javascript" src="{% static 'tiny_mce/utils/mctabs.js' %}"></script>
+  <script src="{% static LOCAL_MCE_FILEBROWSER_JQUERY %}" type="text/javascript"></script>
   <script language="javascript" type="text/javascript">
+    document.domain = /(\w+)(.\w+)?$/.exec(location.hostname)[0];
     function make_file_insertion() {
-      var URL = document.upload_form.selected_file.value;
-      var win = tinyMCEPopup.getWindowArg("window");
-      
-      win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = URL;
-      
+      var URL = $('#selected_file').val();
+      var win = top.tinymce.activeEditor.windowManager.getParams().window;
+
+      win.document.getElementById(top.tinymce.activeEditor.windowManager.getParams().input).value = URL;
+
       if (typeof(win.ImageDialog) != "undefined") {
         if (win.ImageDialog.getImageData) win.ImageDialog.getImageData();
         if (win.ImageDialog.showPreviewImage) win.ImageDialog.showPreviewImage(URL);
       }
       
-      tinyMCEPopup.close();
+      top.tinymce.activeEditor.windowManager.close();
     }
     
     var FileBrowserDialogue = {
+      listing_tab: null,
+      listing_panel: null,
+      upload_tab: null,
+      upload_panel: null,
       init: function () {
-        
+           var self=this;
+
+            {% if is_images_dialog %}
+                this.listing_tab = $("#images_tab");
+                this.listing_panel = $("#images_panel");
+            {% endif %}
+            {% if is_documents_dialog %}
+                this.listing_tab = $("#documents_tab");
+                this.listing_panel = $("#documents_panel");
+            {% endif %}
+
+            this.upload_tab = $("#upload_tab");
+            this.upload_panel = $("#upload_panel");
+
+
+            $(this.listing_panel).hide();
+            $(this.upload_panel).hide();
+
+            if($(this.listing_panel).hasClass('current')){
+                 $(this.listing_panel).show();
+                 $(this.upload_panel).hide();
+            }
+            else{
+                $(this.upload_panel).show();
+                $(this.listing_panel).hide();
+            }
+
+            $(this.upload_tab).click(function(){
+
+                $(self.listing_tab).removeClass("mce-active");
+                $(self.upload_tab).addClass("mce-active");
+                $(self.listing_panel).hide();
+                $(self.upload_panel).show();
+            });
+            $(this.listing_tab).click(function(){
+                $(self.upload_tab).removeClass("mce-active");
+                $(self.listing_tab).addClass("mce-active");
+                $(self.upload_panel).hide();
+                $(self.listing_panel).show();
+            });
+            var insert_button = $("#insert_button");//insert_button
+            var cancel_button = $("#cancel_button");//cancel_button
+
+            $(insert_button).click(function(){
+                self.image_select();
+            });
+
+            $(cancel_button).click(function(){
+                top.tinymce.activeEditor.windowManager.close();
+            });
       },
       image_select: function () {
-        if(document.getElementById("upload_tab").className == 'current') {
-          document.upload_form.submit();
+        if($(this.upload_tab).hasClass('mce-active')) {
+          $("#upload_form").submit();
+
         } else {
           make_file_insertion();
         }
@@ -42,7 +98,7 @@
           }
           
           elem.parentNode.style.background = 'Blue';
-          document.upload_form.selected_file.value = elem.attributes.getNamedItem("href").value;
+          $('#selected_file').val(elem.attributes.getNamedItem("href").value)
         }
         return false;
       },
@@ -50,45 +106,23 @@
         make_file_insertion();
       }
     }
+      $(document).ready(function(){
+          FileBrowserDialogue.init();
+      });
 
-    tinyMCEPopup.onInit.add(FileBrowserDialogue.init, FileBrowserDialogue);
   </script>
 </head>
 <body id="filebrowser" onload="{% if uploaded_file %}FileBrowserDialogue.insert_uploaded_file();{% endif %}">
-  <div class="tabs">
-    <ul>
-      {% if is_images_dialog %}
-        <li id="images_tab" class="{% if not upload_tab_active %}current{% endif %}">
-          <span>
-            <a href="javascript:mcTabs.displayTab('images_tab','images_panel');" onmousedown="return false;">
-              {% trans "Images list" %}
-            </a>
-          </span>
-        </li>
-      {% endif %}
-      {% if is_documents_dialog %}
-        <li id="documents_tab" class="{% if not upload_tab_active %}current{% endif %}">
-          <span>
-            <a href="javascript:mcTabs.displayTab('documents_tab','documents_panel');" onmousedown="return false;">
-              {% trans "Documents list" %}
-            </a>
-          </span>
-        </li>
-      {% endif %}
-      <li id="upload_tab" class="{% if upload_tab_active %}current{% endif %}">
-        <span>
-          <a href="javascript:mcTabs.displayTab('upload_tab','upload_panel');" onmousedown="return false;">{% trans "Upload new" %}</a>
-        </span>
-      </li>
-    </ul>
-  </div>
-  <form action="./" method="post" enctype="multipart/form-data" name="upload_form">
+<form action="./" method="post" enctype="multipart/form-data" id="upload_form">
+<div class="mce-container mce-panel">
+  <div class="mce-tabs">{% if is_images_dialog %}<div id="images_tab" class="mce-tab {% if not upload_tab_active %}mce-active{% endif %}">{% trans "Images list" %}</div>{% endif %}{% if is_documents_dialog %}<div id="documents_tab" class="mce-tab {% if not upload_tab_active %}mce-active{% endif %}">{% trans "Documents list" %}</div>{% endif %}<div id="upload_tab" class="mce-tab {% if upload_tab_active %}mce-active{% endif %}">{% trans "Upload new" %}</div></div>
+
+    <div class="mce-container-body mce-abs-layout" id="panel_wrapper"><div class="mce-abs-end"></div>
     {% csrf_token %}
-    <div class="panel_wrapper">
       {% if is_images_dialog %}
-        <div id="images_panel" class="panel{% if not upload_tab_active %} current{% endif %}">
-          <fieldset>
-            <legend>{% trans "Previosly uploaded images" %}</legend>
+        <div id="images_panel" class="panel {% if not upload_tab_active %}current{% endif %}">
+
+            <h3>{% trans "Previosly uploaded images" %}</h3>
             {% if files %}
               <ul class="images_list">
                 {% for img in files %}
@@ -105,13 +139,13 @@
             {% else %}
               <p>{% trans "No images uploaded" %}</p>
             {% endif %}
-          </fieldset>
+
         </div>
       {% endif %}
       {% if is_documents_dialog %}
-        <div id="documents_panel" class="panel{% if not upload_tab_active %} current{% endif %}">
-          <fieldset>
-            <legend>{% trans "Previosly uploaded documents" %}</legend>
+        <div id="documents_panel" class="panel {% if not upload_tab_active %}current{% endif %}">
+
+            <h3>{% trans "Previosly uploaded documents" %}</h3>
             {% if files %}
               <ul class="documents_list">
                 {% for doc in files %}
@@ -126,23 +160,36 @@
             {% else %}
               <p>{% trans "No documents uploaded" %}</p>
             {% endif %}
-          </fieldset>
+
         </div>
       {% endif %}
-      <div id="upload_panel" class="panel{% if upload_tab_active %} current{% endif %}">
-        <fieldset>
-          <legend>
+      <div id="upload_panel" class="panel {% if upload_tab_active %}current{% endif %}">
+
+          <h3>
             {% trans "Upload file" %}
-          </legend>
+          </h3>
           {{ upload_form }}
-        </fieldset>
+
       </div>
-    </div>
-    <div class="mceActionPanel">
-      <input type="button" id="insert" value="{% trans 'Insert' %}" onClick="FileBrowserDialogue.image_select();" />
-      <input type="button" id="cancel" value="{% trans 'Cancel' %}" onclick="tinyMCEPopup.close();" />
-    </div>
-    <input type="hidden" name="selected_file" value="{% if uploaded_file %}{{ uploaded_file.uploaded_file.url }}{% endif %}" />
-  </form>
+
+   </div>
+
+
+  <div class="mce-container mce-panel mce-foot" >
+      <div class="mce-container-body mce-abs-layout" style="height: 50px;">
+          <div class="mce-abs-end"></div>
+          <div class="mce-widget mce-btn mce-primary mce-first mce-abs-layout-item" id="insert_button" role="button" style="right: 10px; top: 10px;">
+              <button tabindex="-1" type="button" role="presentation" style="height: 100%; width: 100%;">{% trans 'Insert' %}</button>
+          </div>
+          <div tabindex="-1" class="mce-widget mce-btn mce-last mce-abs-layout-item" id="cancel_button" role="button" style="right: 80px; top: 10px;">
+              <button tabindex="-1" type="button" role="presentation" style="height: 100%; width: 100%;">{% trans 'Cancel' %}</button>
+          </div>
+      </div>
+  </div>
+  <input type="hidden" name="selected_file" id="selected_file" value="{% if uploaded_file %}{{ uploaded_file.uploaded_file.url }}{% endif %}" />
+
+
+</div>
+</form>
 </body> 
 </html>

@@ -8,6 +8,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from mce_filebrowser.models import FileBrowserFile
 from mce_filebrowser.forms import FileUploadForm
 
+from mce_filebrowser.conf import    LOCAL_MCE_FILEBROWSER_JQUERY,\
+                                    LOCAL_MCE_FILEBROWSER_UPLOADDIR,\
+                                    LOCAL_MCE_FILEBROWSER_THEMECSS,\
+                                    LOCAL_MCE_FILEBROWSER_PERUSER
 
 @staff_member_required
 def filebrowser(request, file_type):
@@ -18,9 +22,12 @@ def filebrowser(request, file_type):
     upload_tab_active = False
     is_images_dialog = (file_type == 'img')
     is_documents_dialog = (file_type == 'doc')
-    
+
+
     files = FileBrowserFile.objects.filter(file_type=file_type)
-    
+    if LOCAL_MCE_FILEBROWSER_PERUSER == True and request.user and request.user.id:
+        files = files.filter(user_id=request.user.id)
+
     if request.POST:
         upload_form = FileUploadForm(request.POST, request.FILES)
         upload_tab_active = True
@@ -28,6 +35,8 @@ def filebrowser(request, file_type):
         if upload_form.is_valid():
             uploaded_file = upload_form.save(commit=False)
             uploaded_file.file_type = file_type
+            if LOCAL_MCE_FILEBROWSER_PERUSER == True and request.user and request.user.id:
+                uploaded_file.user_id = request.user.id
             uploaded_file.save()
     
     data = {
@@ -36,7 +45,10 @@ def filebrowser(request, file_type):
         'uploaded_file': uploaded_file,
         'upload_tab_active': upload_tab_active,
         'is_images_dialog': is_images_dialog,
-        'is_documents_dialog': is_documents_dialog
+        'is_documents_dialog': is_documents_dialog,
+        'LOCAL_MCE_FILEBROWSER_JQUERY': LOCAL_MCE_FILEBROWSER_JQUERY,
+        'LOCAL_MCE_FILEBROWSER_UPLOADDIR': LOCAL_MCE_FILEBROWSER_UPLOADDIR,
+        'LOCAL_MCE_FILEBROWSER_THEMECSS': LOCAL_MCE_FILEBROWSER_THEMECSS
     }
     
     return render_to_response(template, data, RequestContext(request))
