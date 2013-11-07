@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
-from django.contrib.admin.views.decorators import staff_member_required
+
 
 from mce_filebrowser.models import FileBrowserFile
 from mce_filebrowser.forms import FileUploadForm
@@ -11,9 +11,18 @@ from mce_filebrowser.forms import FileUploadForm
 from mce_filebrowser.conf import    LOCAL_MCE_FILEBROWSER_JQUERY,\
                                     LOCAL_MCE_FILEBROWSER_UPLOADDIR,\
                                     LOCAL_MCE_FILEBROWSER_THEMECSS,\
-                                    LOCAL_MCE_FILEBROWSER_PERUSER
+                                    LOCAL_MCE_FILEBROWSER_PERUSER, \
+                                    LOCAL_MCE_FILEBROWSER_DECORATOR_MODULE, \
+                                    LOCAL_MCE_FILEBROWSER_DECORATOR_METHOD
 
-@staff_member_required
+def custom_decorator(*args, **kwargs):
+    m = __import__(LOCAL_MCE_FILEBROWSER_DECORATOR_MODULE, globals(), locals(), [LOCAL_MCE_FILEBROWSER_DECORATOR_METHOD], -1)
+    #m = __import__ ()
+    func = getattr(m,LOCAL_MCE_FILEBROWSER_DECORATOR_METHOD)
+    return func(*args, **kwargs)
+
+
+@custom_decorator
 def filebrowser(request, file_type):
     """ Trigger view for filebrowser """
     template = 'filebrowser.html'
@@ -54,7 +63,7 @@ def filebrowser(request, file_type):
     return render_to_response(template, data, RequestContext(request))
 
 
-@staff_member_required
+@custom_decorator
 def filebrowser_remove_file(request, item_id, file_type):
     """ Remove file """
     fobj = get_object_or_404(FileBrowserFile, file_type=file_type, id=item_id)
