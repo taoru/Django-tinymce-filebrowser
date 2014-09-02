@@ -127,9 +127,9 @@
               <ul class="images_list">
                 {% for img in files %}
                   <li>
-                    {% thumbnail img.uploaded_file "100x100" crop="center" as im %}
+                    {% thumbnail img.uploaded_file "100x100" crop="center" as thumb %}
                       <a href="{{ img.uploaded_file.url }}" onClick="FileBrowserDialogue.file_in_use(this);return false;">
-                        <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" border="0" />
+                        <img src="{{ thumb.url }}" width="{{ thumb.width }}" height="{{ thumb.height }}" border="0" />
                       </a>
                     {% endthumbnail %}
                     <a href="{% url 'mce-filebrowser-remove-image' img.id %}" title="{% trans 'Remove' %}" class="rm">x</a>
@@ -145,7 +145,7 @@
       {% if is_documents_dialog %}
         <div id="documents_panel" class="panel {% if not upload_tab_active %}current{% endif %}">
 
-            <h3>{% trans "Previosly uploaded documents" %}</h3>
+            <h3>{% trans "Previously uploaded documents" %}</h3>
             {% if files %}
               <ul class="documents_list">
                 {% for doc in files %}
