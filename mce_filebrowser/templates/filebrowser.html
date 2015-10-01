@@ -12,16 +12,17 @@
     document.domain = /(\w+)(.\w+)?$/.exec(location.hostname)[0];
     function make_file_insertion() {
       var URL = $('#selected_file').val();
-      var win = top.tinymce.activeEditor.windowManager.getParams().window;
 
-      win.document.getElementById(top.tinymce.activeEditor.windowManager.getParams().input).value = URL;
+      var win = parent.tinyMCE.activeEditor.windowManager.getParams().window;
+
+      win.document.getElementById(parent.tinyMCE.activeEditor.windowManager.getParams().input).value = URL;
 
       if (typeof(win.ImageDialog) != "undefined") {
         if (win.ImageDialog.getImageData) win.ImageDialog.getImageData();
         if (win.ImageDialog.showPreviewImage) win.ImageDialog.showPreviewImage(URL);
       }
-      
-      top.tinymce.activeEditor.windowManager.close();
+
+      parent.tinyMCE.activeEditor.windowManager.close();
     }
     
     var FileBrowserDialogue = {
@@ -78,7 +79,7 @@
             });
 
             $(cancel_button).click(function(){
-                top.tinymce.activeEditor.windowManager.close();
+                parent.tinyMCE.activeEditor.windowManager.close();
             });
       },
       image_select: function () {
